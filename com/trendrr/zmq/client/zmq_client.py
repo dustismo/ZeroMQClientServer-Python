@@ -3,7 +3,8 @@
 	@author: mattd
 '''
 import zmq, uuid
-from quantumspin.api.zmq_client_poller import ZMQClientPoller
+from Queue import Queue
+from com.trendrr.zmq.client.zmq_client_poller import ZMQClientPoller
 
 class ZMQClient():
 
@@ -11,13 +12,11 @@ class ZMQClient():
 		self.connection = connection
 		self.handler = handler
 		self.id = uuid.uuid4()
-		
+		self.socket = None
 		#used by the poller thread
 		self.poller_index
-
-#		ZMQ.Socket socket;
-#		ArrayBlockingQueue<byte[]> outqueue = new ArrayBlockingQueue<byte[]>(25);
-#		LazyInit connectLock = new LazyInit();
+		self.outqueue = Queue()
+#		LazyInit connectLock = new LazyInit()
 
 
 	def get_connection(self):
@@ -47,7 +46,7 @@ class ZMQClient():
 
 	def close(self):
 		print 'Client CLOSE!'
-		client_poller.instance().disconnect.add(self)
+		ZMQClientPoller.instance().disconnect.add(self)
 		ZMQClientPoller.instance().wakeup()
 
 	def _connected(self):

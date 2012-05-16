@@ -2,23 +2,25 @@
 	Created on May 15, 2012
 	@author: mattd
 '''
-import zmq, uuid, threading
+import zmq, threading
+from com.trendrr.zmq.client.zmq_client_wakeup import ZMQClientWakeup
+from Queue import Queue
 
 class ZMQClientPoller(threading.Thread):
-    
-    poller = None
+	
+	poller = None
 
-    @staticmethod
-    def instance():
-        if not ZMQClientPoller.poller:
-            pass
-        return ZMQClientPoller.poller
+	@staticmethod
+	def instance():
+		if not ZMQClientPoller.poller:
+			pass
+		return ZMQClientPoller.poller
 
 #	static LazyInitObject < ZMQClientPoller > instance = new LazyInitObject < ZMQClientPoller > () {
 #
 #		@Override
 #		public ZMQClientPoller init() {
-#            poller = ZMQClientPoller();
+#			poller = ZMQClientPoller();
 #			poller.init();
 #			Thread t = new Thread(poller);
 #			t.setDaemon(true);
@@ -26,59 +28,61 @@ class ZMQClientPoller(threading.Thread):
 #			return poller;
 #		}
 #	};
-    
-#    @staticmethod
-#	def instance():
-#        return instance.get()
-
-	#queue of clients waiting to connect.
-	ArrayBlockingQueue < ZMQClient > connect = new ArrayBlockingQueue < ZMQClient > (10);
-
-	#queue of clients waiting to disconnect.
-	ArrayBlockingQueue < ZMQClient > disconnect = new ArrayBlockingQueue < ZMQClient > (10);
 	
-	ZMQClientWakeup outgoing;
-	ZMQ.Socket backend;
+#	@staticmethod
+#	def instance():
+#		return instance.get()
+
+	
+	
+	
 
 
 	def __init__(self):
 		self.clients = {}
 		self.context = zmq.Context()
-        self.backend = None
-        
-    ''' 
+		self.backend = None
+		self.outgoing = None
+
+		#queue of clients waiting to connect.
+		self.connect = Queue()
+
+		#queue of clients waiting to disconnect.
+		self.disconnect = Queue()
+		
+	''' 
 	wakes up the poller, checks for disconnects, connects, outgoing messages, ect.
 	'''
-    def wakeup(self):
-        self.outgoing.send(new byte[1])
-        
-    '''
+	def wakeup(self):
+		self.outgoing.send("")
+		
+	'''
 	do the initialization outside of the main thread execution.
 	'''
-    def init(self):
-        self.backend = self.context.socket(zmq.dealer)
+	def init(self):
+		self.backend = self.context.socket(zmq.DEALER)
 		self.backend.bind("inproc://clientbackend")
 		self.outgoing = ZMQClientWakeup(self.context, "inproc://clientbackend")
 		self.outgoing.start()
 
-    def run():
+	def run(self):
 		poller = self.context.poller()
-		alert = poller.register(self.backend, zmq.Poller.POLLIN)
+		alert = poller.register(self.backend, zmq.POLLIN)
 		more = False
 		
-        while True:
+		while True:
 			poller.poll()
 			#process the wakeup alerts
-			if poller.pollin(alert)):
+			if poller.pollin(alert):
 				while more:
 					#ingest and discard the message.
-					byte[] id = backend.recv(0);
-                    more = backend.hasReceiveMore()
+					id = self.backend.recv(0) #@ReservedAssignment
+					more = self.backend.hasReceiveMore()
 
 			''' 
-            handle disconnections
-            '''
-            disconnection = self.disconnect.poll();
+			handle disconnections
+			'''
+			disconnection = self.disconnect.poll()
 			while not disconnection:
 				#connect to remote.
 				self.clients.pop(self.disconnection.pollerIndex)
@@ -86,11 +90,11 @@ class ZMQClientPoller(threading.Thread):
 				self.disconnection.socket.setLinger(0l)
 				self.disconnection.socket.close()
 				self.disconnection._closed()
-				self.disconnection = disconnect.poll()
-                
+				self.disconnection = self.disconnect.poll()
+				
 			'''
 			handle new connections
-            ''' 
+			''' 
 			newConnection = self.connect.poll();
 			while not newConnection:
 				#connect to remote
@@ -98,10 +102,10 @@ class ZMQClientPoller(threading.Thread):
 				newConnection.socket.setIdentity(newConnection.id)
 				print "CONNECTING: %s" % newConnection.getConnection()
 				newConnection.socket.connect(newConnection.getConnection())
-				newConnection.pollerIndex = poller.register(newConnection.socket, zmq.Poller.POLLIN)
+				newConnection.pollerIndex = poller.register(newConnection.socket, zmq.POLLIN)
 				self.clients.put(newConnection.pollerIndex, newConnection)
 				newConnection._connected()
-				newConnection = connect.poll()
+				newConnection = self.connect.poll()
 
 			for index in self.clients.keys():
 				c = self.clients.get(index)
@@ -109,16 +113,16 @@ class ZMQClientPoller(threading.Thread):
 				if poller.pollin(index):
 					# there is message ! 
 					while more:
-                        message = c.socket.recv(0)
+						message = c.socket.recv(0)
 						more = c.socket.hasReceiveMore()
 						c.handler.incoming(c, message)
 
 				#check for error?
-				if poller.pollerr(index)):
-					#TODO
-				}
+				zmq.POLLERR
+				if poller.pollerr(index):
+					pass
 
 				#check for outgoing..
-				while not c.outqueue.isEmpty()):
-                    message = c.outqueue.poll()
+				while not c.outqueue.isEmpty():
+					message = c.outqueue.poll()
 					c.socket.send(message, 0)		
