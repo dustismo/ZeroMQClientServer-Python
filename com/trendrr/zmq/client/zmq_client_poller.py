@@ -4,6 +4,7 @@
 '''
 
 import zmq, threading
+from zmq.core.poll import Poller
 from com.trendrr.zmq.client.zmq_client_wakeup import ZMQClientWakeup
 from Queue import Queue
 
@@ -48,7 +49,7 @@ class ZMQClientPoller(threading.Thread):
 		self.outgoing.start()
 
 	def run(self):
-		poller = zmq.Poller()
+		poller = Poller()
 		alert = poller.register(self.backend, zmq.POLLIN)
 		more = False
 		
