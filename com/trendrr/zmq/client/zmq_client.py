@@ -18,13 +18,16 @@ class ZMQClient():
 		self.poller_index
 		self.outqueue = Queue(25)
 		self.connectLock = Lock()
-
+		self.connected = False
+		
 	def get_connection(self):
 		return self.connection
 
 	def send(self,message):
 		with self.connectLock:
-			self.connect()
+			if not self.connected:
+				self.connect()
+				self.connected = True
 		
 		try:
 			self.outqueue.put(message)

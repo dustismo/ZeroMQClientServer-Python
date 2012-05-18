@@ -5,12 +5,13 @@ Created on May 17, 2012
 
 import zmq, threading
 from com.trendrr.zmq.server.zmq_channel import ZMQChannel
+from com.trendrr.zmq.server.zmq_server_outgoing import ZMQServerOutgoing
 
 class ZMQServer(threading.Thread):
 	def __init__(self):
 		self.port = 8653
 		self.handler
-		private AtomicBoolean stopped = new AtomicBoolean(True)
+		self.stopped = True
 		self.context
 		self.pollingTimeout = 1000*1000
 
@@ -65,19 +66,19 @@ class ZMQServer(threading.Thread):
 			if (poller.pollin(frontIndex)):
 				#incoming messages.
 				while more:
-					id = frontend.recv(0)
+					_id = frontend.recv(0)
 					message = frontend.recv(0)
 					more = frontend.hasReceiveMore()
-					self.handleIncoming(ZMQChannel(id, outgoing), message)
+					self.handleIncoming(ZMQChannel(_id, outgoing), message)
 
 			if (poller.pollin(backIndex)):
 				#theres a message needs to be written.
 				while more:
-					id = backend.recv(0)
+					_id = backend.recv(0)
 					message = backend.recv(0)
 					more = backend.hasReceiveMore()
 					# Broker it
-					frontend.send(id, zmq.SNDMORE)
+					frontend.send(_id, zmq.SNDMORE)
 					frontend.send(message,0)
 
 	'''
