@@ -21,8 +21,8 @@ ClientHandler(ZMQClientMessageHandler):
 		except Exception,e:
 			print e.message
 
-		def error(x):
-			print x.message
+	def error(x):
+		print x.message
  
 client = ZMQClient("tcp://localhost:8988", ClientHandler())
 
@@ -37,22 +37,21 @@ Server
  '''
  this creates a simple echo server
  '''
-	ZMQServerMessageHandler handler = new ZMQServerMessageHandler() {
+
+class ServerHandler(ZMQServerMessageHandler):
 			
-			@Override
-			public void incoming(ZMQChannel channel, byte[] message) {
-				//just send the message back to the originating user.
-				//you could also start a new thread here to handle more intense processing.
-				//the channel is threadsafe
-				channel.send(message);
-			}
+	def incoming(self, channel,message):
+		#just send the message back to the originating user.
+		#you could also start a new thread here to handle more intense processing.
+		#the channel is threadsafe
+		channel.send(message)
 			
-			@Override
-			public void error(Exception x) {
-				x.printStackTrace();
-			}
-		};
-		ZMQServer server = new ZMQServer();
-		server.listen(8988, handler, true);
+		
+	def error(self, x):
+		print x.message
+
+
+server = new ZMQServer()
+server.listen(8988, ServerHandler(), True)
 
 ```

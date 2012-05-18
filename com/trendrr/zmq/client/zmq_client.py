@@ -43,7 +43,8 @@ class ZMQClient():
 		print 'Client CLOSE!'
 		ZMQClientPoller.instance().disconnect.add(self)
 		ZMQClientPoller.instance().wakeup()
-
+		self.connected = False
+		
 	def _connected(self):
 		print "CONNECTED!"
 	

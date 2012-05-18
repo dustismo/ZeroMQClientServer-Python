@@ -67,7 +67,7 @@ class ZMQClientPoller(threading.Thread):
 			handle disconnections
 			'''
 			disconnection = self.disconnect.get()
-			while not disconnection:
+			while disconnection:
 				#connect to remote
 				self.clients.pop(disconnection.pollerIndex)
 				poller.unregister(disconnection.socket)
