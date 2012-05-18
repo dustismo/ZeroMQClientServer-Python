@@ -28,10 +28,10 @@ class ZMQClientPoller(threading.Thread):
 		self.outgoing = None
 
 		#queue of clients waiting to connect.
-		self.connect = Queue()
+		self.connect = Queue(10)
 
 		#queue of clients waiting to disconnect.
-		self.disconnect = Queue()
+		self.disconnect = Queue(10)
 		
 	''' 
 	wakes up the poller, checks for disconnects, connects, outgoing messages, ect.
@@ -68,7 +68,7 @@ class ZMQClientPoller(threading.Thread):
 			'''
 			disconnection = self.disconnect.get()
 			while not disconnection:
-				#connect to remote.
+				#connect to remote
 				self.clients.pop(disconnection.pollerIndex)
 				poller.unregister(disconnection.socket)
 				disconnection.socket.setLinger(0l)

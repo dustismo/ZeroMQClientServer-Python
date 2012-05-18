@@ -2,9 +2,11 @@
 	Created on May 15, 2012
 	@author: mattd
 '''
-import zmq, uuid
+import uuid
 from Queue import Queue
 from com.trendrr.zmq.client.zmq_client_poller import ZMQClientPoller
+from __future__ import with_statement
+from threading import Lock
 
 class ZMQClient():
 
@@ -13,23 +15,16 @@ class ZMQClient():
 		self.handler = handler
 		self.id = uuid.uuid4()
 		self.socket = None
-		#used by the poller thread
 		self.poller_index
-		self.outqueue = Queue()
-#		LazyInit connectLock = new LazyInit()
-
+		self.outqueue = Queue(25)
+		self.connectLock = Lock()
 
 	def get_connection(self):
 		return self.connection
 
 	def send(self,message):
-		if self.connectLock.start():
-			try:
-				self.connect()
-			except:
-				pass
-			else:
-				self.connectLock.end()
+		with self.connectLock:
+			self.connect()
 		
 		try:
 			self.outqueue.put(message)
@@ -37,9 +32,6 @@ class ZMQClient():
 		except Exception, e:
 			print e.message
 
-	'''
-	called lazily
-	'''
 	def connect(self):
 		ZMQClientPoller.instance().connect.add(self)
 		ZMQClientPoller.instance().wakeup()

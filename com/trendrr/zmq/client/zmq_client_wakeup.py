@@ -10,7 +10,7 @@ class ZMQClientWakeup(threading.Thread):
 		threading.Thread.__init__(self)
 		self.context = context
 		self.connection = connection
-		self.messages = Queue()
+		self.messages = Queue(10)
 		self.daemon = True
 
 	def run(self):
