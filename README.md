@@ -10,7 +10,8 @@ Usage:
 create a client
 you only need a client and a class to handle incoming messages
 '''
-handler = 
+
+from com.trendrr.zmq.client.zmq_client_message_handler import ZMQClientMessageHandler
 
 ClientHandler(ZMQClientMessageHandler):
 
