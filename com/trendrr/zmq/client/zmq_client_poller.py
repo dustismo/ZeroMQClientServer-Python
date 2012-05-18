@@ -66,31 +66,33 @@ class ZMQClientPoller(threading.Thread):
 			''' 
 			handle disconnections
 			'''
-			disconnection = self.disconnect.get()
-			while disconnection:
-				#connect to remote
-				self.clients.pop(disconnection.pollerIndex)
-				poller.unregister(disconnection.socket)
-				disconnection.socket.setLinger(0l)
-				disconnection.socket.close()
-				disconnection._closed()
-				disconnection = self.disconnect.get()
+			try :
+				while True:
+					
+					disconnection = self.disconnect.get(block=False)
+					self.clients.pop(disconnection.pollerIndex)
+					poller.unregister(disconnection.socket)
+					disconnection.socket.setLinger(0l)
+					disconnection.socket.close()
+					disconnection._closed()
+			except:
+				pass #TODO only want to pass on Empty exceptions
 				
 			'''
 			handle new connections
 			''' 
-			newConnection = self.connect.get()
-			
-			while not newConnection:
-				#connect to remote
-				newConnection.socket = self.context.socket(zmq.DEALER)
-				newConnection.socket.setsockopt(zmq.IDENTITY,newConnection.id)
-				print "CONNECTING: %s" % newConnection.getConnection()
-				newConnection.socket.connect(newConnection.getConnection())
-				newConnection.pollerIndex = poller.register(newConnection.socket, zmq.POLLIN)
-				self.clients.put(newConnection.pollerIndex, newConnection)
-				newConnection._connected()
-				newConnection = self.connect.get()
+			try :
+				while True:
+					newConnection = self.connect.get(block=False)
+					newConnection.socket = self.context.socket(zmq.DEALER)
+					newConnection.socket.setsockopt(zmq.IDENTITY,newConnection.id)
+					print "CONNECTING: %s" % newConnection.getConnection()
+					newConnection.socket.connect(newConnection.getConnection())
+					newConnection.pollerIndex = poller.register(newConnection.socket, zmq.POLLIN)
+					self.clients.put(newConnection.pollerIndex, newConnection)
+					newConnection._connected()
+			except:
+				pass #TODO only want to pass on Empty exceptions
 
 			for index in self.clients.keys():
 				c = self.clients.get(index)
